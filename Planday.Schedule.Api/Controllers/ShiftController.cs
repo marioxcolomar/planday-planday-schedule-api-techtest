@@ -35,14 +35,14 @@ namespace Planday.Schedule.Api.Controllers
         [HttpPost]
         public ActionResult<Shift> CreateShift([FromBody] DateRange dateRange)
         {
-            if (string.IsNullOrWhiteSpace(dateRange.start) || string.IsNullOrWhiteSpace(dateRange.end))
+            if (string.IsNullOrWhiteSpace(dateRange.Start) || string.IsNullOrWhiteSpace(dateRange.End))
             {
                 return BadRequest("Start date and end date are required.");
             }
 
             // Ensure start is not greater than end time
-            DateTime DateStart = DateTime.Parse(dateRange.start);
-            DateTime DateEnd = DateTime.Parse(dateRange.end);
+            DateTime DateStart = DateTime.Parse(dateRange.Start);
+            DateTime DateEnd = DateTime.Parse(dateRange.End);
             if (DateStart > DateEnd)
             {
                 return BadRequest("Start date needs to be before the end date.");
@@ -53,7 +53,7 @@ namespace Planday.Schedule.Api.Controllers
                 return BadRequest("Start and end dates need to be in the same day.");
             }
 
-            var newShift = _shiftService.CreateShift(dateRange.start, dateRange.end);
+            var newShift = _shiftService.CreateShift(dateRange.Start, dateRange.End);
             return CreatedAtAction(nameof(GetShiftById), new { id = newShift.Result.Id }, newShift.Result);
         }
     }
@@ -62,6 +62,6 @@ namespace Planday.Schedule.Api.Controllers
 
 public class DateRange
 {
-    public string start { get; set; }
-    public string end { get; set; }
+    public string? Start { get; set; }
+    public string? End { get; set; }
 }

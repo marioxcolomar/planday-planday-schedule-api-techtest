@@ -35,7 +35,7 @@ namespace Planday.Schedule.Infrastructure.Queries
             await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
             sqlConnection.Open();
 
-            Shift shift = null;
+            Shift? shift = null;
             using (var command = new SqliteCommand(queryById, sqlConnection))
             {
                 command.Parameters.AddWithValue("@id", id);
