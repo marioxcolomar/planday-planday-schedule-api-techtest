@@ -56,6 +56,32 @@ namespace Planday.Schedule.Infrastructure.Queries
         }
 
         private const string queryById = "SELECT Id, EmployeeId, Start, End FROM Shift WHERE Id = @id;";
+
+        public async Task<Shift> CreateShift(string start, string end)
+        {
+            int newId;
+            await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
+            sqlConnection.Open();
+
+            // Get the highest current ID to increment
+            string getMaxIdQuery = "SELECT IFNULL(MAX(Id), 0) FROM Shift;";
+            using (var command = new SqliteCommand(getMaxIdQuery, sqlConnection))
+            {
+                newId = Convert.ToInt32(command.ExecuteScalar()) + 1;
+            }
+
+            // Insert the new record
+            string insertQuery = "INSERT INTO Shift (Id, Start, End) VALUES (@Id, @Start, @End);";
+            using (var command = new SqliteCommand(insertQuery, sqlConnection))
+            {
+                command.Parameters.AddWithValue("@Id", newId);
+                command.Parameters.AddWithValue("@Start", start);
+                command.Parameters.AddWithValue("@End", end);
+                command.ExecuteNonQuery();
+            }
+
+            return new Shift(newId, null, DateTime.Parse(start), DateTime.Parse(end));
+        }
     }
 }
 

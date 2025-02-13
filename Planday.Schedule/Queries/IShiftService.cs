@@ -7,6 +7,7 @@ namespace Planday.Schedule.Queries
     {
         Task<IReadOnlyCollection<Shift>> GetAllShifts();
         Task<Shift> GetShiftById(long Id);
+        Task<Shift> CreateShift(string start, string end);
     }
 }
 
