@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
+using Planday.Schedule.Infrastructure.Exceptions;
 using Planday.Schedule.Infrastructure.Queries;
 using Planday.Schedule.Queries;
 
@@ -55,6 +56,20 @@ namespace Planday.Schedule.Api.Controllers
 
             var newShift = _shiftService.CreateShift(dateRange.Start, dateRange.End);
             return CreatedAtAction(nameof(GetShiftById), new { id = newShift.Result.Id }, newShift.Result);
+        }
+
+        [HttpPut("{id}/{employeeId}")]
+        public ActionResult<Shift> AssignEmployeeToShift(int id, int employeeId)
+        {
+            try
+            {
+                var updatedShift = _shiftService.AssignEmployeeToShift(id, employeeId);
+                return Ok(updatedShift.Result);
+            }
+            catch (RecordNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 

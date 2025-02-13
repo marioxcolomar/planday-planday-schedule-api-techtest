@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.Sqlite;
+using Planday.Schedule.Infrastructure.Exceptions;
 using Planday.Schedule.Infrastructure.Providers.Interfaces;
 using Planday.Schedule.Queries;
 
@@ -8,10 +9,12 @@ namespace Planday.Schedule.Infrastructure.Queries
     public class ShiftService : IShiftService
     {
         private readonly IConnectionStringProvider _connectionStringProvider;
+        private readonly IEmployeeService _employeeService;
 
-        public ShiftService(IConnectionStringProvider connectionStringProvider)
+        public ShiftService(IConnectionStringProvider connectionStringProvider, IEmployeeService employeeService)
         {
             _connectionStringProvider = connectionStringProvider;
+            _employeeService = employeeService;
         }
 
         public async Task<IReadOnlyCollection<Shift>> GetAllShifts()
@@ -46,8 +49,7 @@ namespace Planday.Schedule.Infrastructure.Queries
                 }
                 else
                 {
-                    Console.WriteLine("No record found with the given ID.");
-
+                    throw new RecordNotFoundException("No shift found with the given ID.");
                 }
             }
 
@@ -55,6 +57,7 @@ namespace Planday.Schedule.Infrastructure.Queries
 
         }
 
+        // TODO: validate variable does nothing malicious with the query
         private const string queryById = "SELECT Id, EmployeeId, Start, End FROM Shift WHERE Id = @id;";
 
         public async Task<Shift> CreateShift(string start, string end)
@@ -82,6 +85,34 @@ namespace Planday.Schedule.Infrastructure.Queries
 
             return new Shift(newId, null, DateTime.Parse(start), DateTime.Parse(end));
         }
+
+        public async Task<Shift> AssignEmployeeToShift(long shiftId, long employeeId)
+        {
+            // TODO: handle employeeId not returning a row
+            using var employee = _employeeService.GetEmployeeById(employeeId);
+
+            // TODO: handle shiftId not returning a row
+            using var shift = GetShiftById(shiftId);
+
+            await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
+            sqlConnection.Open();
+
+            // Update employeedId in shift
+            using var command = new SqliteCommand(updateEmplyeeId, sqlConnection);
+            command.Parameters.AddWithValue("@Id", shiftId);
+            command.Parameters.AddWithValue("@EmployeedId", employeeId);
+            int rowsAffected = command.ExecuteNonQuery();
+
+            if (rowsAffected == 0)
+            {
+                throw new RecordNotFoundException($"No record found with ID {shiftId}");
+            }
+
+            var updatedShift = await GetShiftById(shiftId);
+            return updatedShift;
+        }
+        // TODO: validate variables does nothing malicious with the query
+        private const string updateEmplyeeId = "UPDATE Shift SET EmployeeId = @EmployeedId WHERE Id = @Id;";
     }
 }
 

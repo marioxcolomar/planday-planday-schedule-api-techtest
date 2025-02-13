@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using Planday.Schedule.Infrastructure.Exceptions;
 using Planday.Schedule.Infrastructure.Providers.Interfaces;
 using Planday.Schedule.Queries;
 
@@ -46,14 +47,14 @@ namespace Planday.Schedule.Infrastructure.Queries
         }
         else
         {
-          Console.WriteLine("No record found with the given ID.");
-
+          throw new RecordNotFoundException("No employee found with the given ID.");
         }
       }
 
       return employee!;
 
     }
+    // TODO: validate variable does nothing malicious with the query
     private const string queryById = "SELECT Id, Name FROM Employee WHERE Id = @id;";
   }
 
