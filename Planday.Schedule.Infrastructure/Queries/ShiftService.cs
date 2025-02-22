@@ -33,7 +33,7 @@ namespace Planday.Schedule.Infrastructure.Queries
 
         private record ShiftDto(long Id, long? EmployeeId, string Start, string End);
 
-        public async Task<Shift> GetShiftById(long id)
+        public async Task<Shift> GetShift(long id)
         {
             await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
             sqlConnection.Open();
@@ -53,46 +53,35 @@ namespace Planday.Schedule.Infrastructure.Queries
                 }
             }
 
-            return shift!;
+            return shift;
 
         }
 
         // TODO: validate variable does nothing malicious with the query
         private const string queryById = "SELECT Id, EmployeeId, Start, End FROM Shift WHERE Id = @id;";
 
-        public async Task<Shift> CreateShift(string start, string end)
+        public async Task<Shift> Create(string start, string end)
         {
-            int newId;
             await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
             sqlConnection.Open();
-
-            // Get the highest current ID to increment
-            string getMaxIdQuery = "SELECT IFNULL(MAX(Id), 0) FROM Shift;";
-            using (var command = new SqliteCommand(getMaxIdQuery, sqlConnection))
-            {
-                newId = Convert.ToInt32(command.ExecuteScalar()) + 1;
-            }
 
             // Insert the new record
             string insertQuery = "INSERT INTO Shift (Id, Start, End) VALUES (@Id, @Start, @End);";
             using (var command = new SqliteCommand(insertQuery, sqlConnection))
             {
-                command.Parameters.AddWithValue("@Id", newId);
                 command.Parameters.AddWithValue("@Start", start);
                 command.Parameters.AddWithValue("@End", end);
                 command.ExecuteNonQuery();
             }
 
-            return new Shift(newId, null, DateTime.Parse(start), DateTime.Parse(end));
+            return new Shift(null, null, DateTime.Parse(start), DateTime.Parse(end));
         }
 
-        public async Task<Shift> AssignEmployeeToShift(long shiftId, long employeeId)
+        public async Task<Shift> AssignEmployee(long shiftId, long employeeId)
         {
-            // TODO: handle employeeId not returning a row
-            using var employee = _employeeService.GetEmployeeById(employeeId);
+            await _employeeService.GetEmployeeById(employeeId);
 
-            // TODO: handle shiftId not returning a row
-            using var shift = GetShiftById(shiftId);
+            await GetShift(shiftId);
 
             await using var sqlConnection = new SqliteConnection(_connectionStringProvider.GetConnectionString());
             sqlConnection.Open();
@@ -108,7 +97,7 @@ namespace Planday.Schedule.Infrastructure.Queries
                 throw new RecordNotFoundException($"No record found with ID {shiftId}");
             }
 
-            var updatedShift = await GetShiftById(shiftId);
+            var updatedShift = await GetShift(shiftId);
             return updatedShift;
         }
         // TODO: validate variables does nothing malicious with the query
