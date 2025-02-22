@@ -17,24 +17,21 @@ namespace Planday.Schedule.Api.Controllers
         }
 
         [HttpGet]
-        public Task<IReadOnlyCollection<Shift>> GetAllShifts()
+        public async Task<ActionResult<List<Shift>>> GetAllShifts()
         {
-            return _shiftService.GetAllShifts();
+            var shifts = await _shiftService.GetAllShifts();
+            return Ok(shifts);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Shift> GetShiftById(long id)
+        public async Task<ActionResult<Shift>> GetShift(long id)
         {
-            var shift = _shiftService.GetShiftById(id);
-            if (shift == null)
-            {
-                return NotFound("Record not found.");
-            }
-            return Ok(shift.Result);
+            var shift = await _shiftService.GetShift(id);
+            return Ok(shift);
         }
 
         [HttpPost]
-        public ActionResult<Shift> CreateShift([FromBody] DateRange dateRange)
+        public async Task<ActionResult<Shift>> Create([FromBody] DateRange dateRange)
         {
             if (string.IsNullOrWhiteSpace(dateRange.Start) || string.IsNullOrWhiteSpace(dateRange.End))
             {
@@ -54,22 +51,15 @@ namespace Planday.Schedule.Api.Controllers
                 return BadRequest("Start and end dates need to be in the same day.");
             }
 
-            var newShift = _shiftService.CreateShift(dateRange.Start, dateRange.End);
-            return CreatedAtAction(nameof(GetShiftById), new { id = newShift.Result.Id }, newShift.Result);
+            var newShift = await _shiftService.Create(dateRange.Start, dateRange.End);
+            return CreatedAtAction(nameof(GetShift), new { id = newShift.Id }, newShift);
         }
 
         [HttpPut("{id}/{employeeId}")]
-        public ActionResult<Shift> AssignEmployeeToShift(int id, int employeeId)
+        public async Task<ActionResult<Shift>> AssignEmployee(int id, int employeeId)
         {
-            try
-            {
-                var updatedShift = _shiftService.AssignEmployeeToShift(id, employeeId);
-                return Ok(updatedShift.Result);
-            }
-            catch (RecordNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            var updatedShift = await _shiftService.AssignEmployee(id, employeeId);
+            return Ok(updatedShift);
         }
     }
 
