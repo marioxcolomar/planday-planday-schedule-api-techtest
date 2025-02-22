@@ -6,9 +6,9 @@ namespace Planday.Schedule.Queries
     public interface IShiftService
     {
         Task<IReadOnlyCollection<Shift>> GetAllShifts();
-        Task<Shift> GetShiftById(long Id);
-        Task<Shift> CreateShift(string start, string end);
-        Task<Shift> AssignEmployeeToShift(long shiftId, long employeeId);
+        Task<Shift> GetShift(long Id);
+        Task<Shift> Create(string start, string end);
+        Task<Shift> AssignEmployee(long shiftId, long employeeId);
     }
 }
 
